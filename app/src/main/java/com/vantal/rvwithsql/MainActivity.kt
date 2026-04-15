@@ -440,6 +440,18 @@ class MainActivity : AppCompatActivity() {
 
 
 
+    private fun sortProducts(column: String, ascending: Boolean) {
+        CoroutineScope(Dispatchers.IO).launch {
+            // Fetch
+            val sortedList = dbHelper.getSortedProducts(column, ascending)
+
+            withContext(Dispatchers.Main) {
+                // Update
+                productAdapter.updateProducts(sortedList)
+            }
+        }
+    }
+
 
 
 

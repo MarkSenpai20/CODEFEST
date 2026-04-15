@@ -197,6 +197,43 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return products
     }
 
+    /**
+
+     * @param sortBy: constants COL_NAME, COL_PRICE, ...
+     * @param isAscending: true = A-Z/Lowest-First; false = Z-A/Highest-First
+     */
+    fun getSortedProducts(sortBy: String, isAscending: Boolean = true): List<Product> {
+        val products = mutableListOf<Product>()
+        val db = readableDatabase
+
+
+        val order = if (isAscending) "ASC" else "DESC"
+        val orderByClause = "$sortBy $order"
+
+        val cursor = db.query(
+            TABLE_PRODUCTS,  // Table
+            null,
+            null,
+            null,
+            null,
+            null,
+            orderByClause
+        )
+
+        with(cursor) {
+            while (moveToNext()) {
+                val id = getLong(getColumnIndexOrThrow(COL_ID))
+                val name = getString(getColumnIndexOrThrow(COL_NAME))
+                val desc = getString(getColumnIndexOrThrow(COL_DESC))
+                val price = getDouble(getColumnIndexOrThrow(COL_PRICE))
+                val imagePath = getString(getColumnIndexOrThrow(COL_IMAGE))
+                products.add(Product(id, name, desc, price, imagePath))
+            }
+        }
+        cursor.close()
+        return products
+    }
+
     // Internal data class
     private data class ProductData(val name: String, val description: String, val price: Double, val imagePath: String)
     private data class UserData(val email: String, val password: String)
