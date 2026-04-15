@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity() {
 
 
     // Current UI state (bitwise)
-    private var currentState = UIState.FormButton.STATE_LOGIN
+    private var currentState = UIState.Navigation.STATE_HOME
 
 
 
@@ -136,7 +136,7 @@ class MainActivity : AppCompatActivity() {
         dashboardState = findViewById(R.id.dashboardState)
         settingState = findViewById(R.id.settingState)
 
-        // edit text later
+        // edit text for Debugging
         layoutTv = findViewById(R.id.layout_tv)
 
         // Buttons for navigation
@@ -190,7 +190,7 @@ class MainActivity : AppCompatActivity() {
         recyclerView = listStateView.findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
         productAdapter = ProductAdapter(this) { product ->
-            // On item click: switch to preview state and show product details
+            // On item click preview product inside of our recycler view item list
             showPreview(product)
         }
 
@@ -224,9 +224,9 @@ class MainActivity : AppCompatActivity() {
 
         dbHelper = DatabaseHelper(this)
 
-        // Load products from DB (background thread)
+        // Load products from SQLite then update the adapter function
+        // Donut delete either
         loadProducts()
-
         renderScreen()
     }
 
@@ -245,20 +245,33 @@ class MainActivity : AppCompatActivity() {
             R.id.login_btn -> {
                 val isValid = dbHelper.checkUsers(email, password)
                 Toast.makeText(this@MainActivity, "$isValid", Toast.LENGTH_SHORT).show()
+
+                // TEST VALIDATION: DO NOT DELETE!!!!!!!!!!!
+                /*if (isValid) {
+                    val loggedInUser = dbHelper.getUserByEmail(email)
+                    val welcomeName = loggedInUser?.email?.substringBefore("@") ?: "User"
+                    Toast.makeText(this@MainActivity, "Welcome back $welcomeName!", Toast.LENGTH_SHORT).show()
+                    layoutTv.text = "Welcome, $welcomeName"
+                    currentState = UIState.Navigation.STATE_HOME
+                    renderScreen()
+                }*/
+
+
                 if (isValid) {
                     Toast.makeText(this@MainActivity, "Login Success", Toast.LENGTH_SHORT).show()
-                    // Login Success: Switch to Home/List state
+                    // Login Success
                     currentState = UIState.Navigation.STATE_HOME
                     renderScreen()
                 } else {
-//                    userPass.error = "Invalid email or password"
+                    // DO NOT DELETE!!!!!!!!
+                   // userPass.error = "Invalid email or password"
                     Toast.makeText(this@MainActivity, "Invalid email or password", Toast.LENGTH_SHORT).show()
                 }
             }
             R.id.signup_btn -> {
                 val id = dbHelper.addUsers(email, password)
                 if (id != -1L) {
-                    // Registration Success: Automatically log them in or stay on form
+                    // Registration Success
                     currentState = UIState.FormButton.STATE_LOGIN
                     renderScreen()
                 }
@@ -276,9 +289,7 @@ class MainActivity : AppCompatActivity() {
         renderScreen()
     }
 
-
-    private fun renderScreen(){
-
+    private fun initViewVisibility(){
         listStateView.visibility = View.GONE
         previewStateView.visibility = View.GONE
         navBar.visibility = View.GONE
@@ -286,17 +297,21 @@ class MainActivity : AppCompatActivity() {
         settingState.visibility = View.GONE
         formState.visibility = View.GONE
         masterLayout.visibility = View.GONE
+    }
+
+    private fun initializeMasterLayoutAndNavBar(){
+        masterLayout.visibility = View.VISIBLE
+        navBar.visibility = View.VISIBLE
+    }
 
 
-
-
-
-
+    private fun renderScreen(){
+        // HIDE them all first
+        initViewVisibility()
 
         when(currentState){
             UIState.Navigation.STATE_HOME -> {
-                masterLayout.visibility = View.VISIBLE
-                navBar.visibility = View.VISIBLE
+                initializeMasterLayoutAndNavBar()
                 currentState = UIState.NavHome.ProductList.STATE_LIST
 
 
@@ -304,16 +319,14 @@ class MainActivity : AppCompatActivity() {
                 layoutTv.text = "HOME SCREEN"
             }
             UIState.Navigation.STATE_SETTINGS -> {
-                masterLayout.visibility = View.VISIBLE
-                navBar.visibility = View.VISIBLE
+                initializeMasterLayoutAndNavBar()
                 settingState.visibility = View.VISIBLE
 
 
                 layoutTv.text = "SETTINGS SCREEN"
             }
             UIState.Navigation.STATE_DASHBOARD -> {
-                masterLayout.visibility = View.VISIBLE
-                navBar.visibility = View.VISIBLE
+                initializeMasterLayoutAndNavBar()
                 dashboardState.visibility = View.VISIBLE
 
 
@@ -321,15 +334,13 @@ class MainActivity : AppCompatActivity() {
             }
 
             UIState.NavHome.ProductList.STATE_PREVIEW -> {
-                masterLayout.visibility = View.VISIBLE
-                navBar.visibility = View.VISIBLE
+                initializeMasterLayoutAndNavBar()
 
 
                 layoutTv.text = "PREVIEW SCREEN"
             }
             UIState.NavHome.ProductList.STATE_LIST -> {
-                masterLayout.visibility = View.VISIBLE
-                navBar.visibility = View.VISIBLE
+                initializeMasterLayoutAndNavBar()
 
                 layoutTv.text = "HOME SCREEN"
             }
@@ -386,22 +397,25 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun showPreview(product: Product) {
-        // Update preview UI with product data
         previewName.text = product.name
         previewDesc.text = product.description
         previewPrice.text = "$${product.price}"
 
-        // Load image from drawable using resource name
-        val resourceId = resources.getIdentifier(product.imagePath, "drawable", packageName)
-        if (resourceId != 0) {
-            Glide.with(this).load(resourceId).into(previewImage)
-        } else {
-            Glide.with(this).load(R.drawable.ic_placeholder).into(previewImage)
-        }
 
-        // Change state
+        val resourceId = resources.getIdentifier(product.imagePath, "drawable", packageName)
+
+
+        val fallbackImage = R.drawable.ic_launcher_background
+
+        Glide.with(this)
+            .load(if (resourceId != 0) resourceId else fallbackImage)
+            .placeholder(fallbackImage)
+            .error(fallbackImage)
+            .into(previewImage)
+
+
         currentState = UIState.NavHome.ProductList.STATE_PREVIEW
-        updateVisibility()
+        renderScreen()
     }
 
 

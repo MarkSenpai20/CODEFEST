@@ -1,4 +1,4 @@
-package com.vantal.rvwithsql.adapter// ProductAdapter.kt
+package com.vantal.rvwithsql.adapter
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
@@ -51,7 +51,7 @@ class ProductAdapter(private val context: Context, private val onItemClick: (Pro
             if (resourceId != 0) {
                 Glide.with(context).load(resourceId).into(productImage)
             } else {
-                Glide.with(context).load(R.drawable.ic_placeholder).into(productImage)
+                Glide.with(context).load(R.drawable.ic_launcher_background).into(productImage)
             }
         }
     }

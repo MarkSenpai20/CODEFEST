@@ -8,7 +8,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     companion object {
         private const val DATABASE_NAME = "products.db"
-        private const val DATABASE_VERSION = 2
+        private const val DATABASE_VERSION = 3
         const val TABLE_PRODUCTS = "products"
         const val COL_ID = "_id"
         const val COL_NAME = "name"
@@ -46,7 +46,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         db.execSQL(createProductTable)
         db.execSQL(createUserTable)
 
-        // Insert fixed product data
+
         insertInitialProducts(db)
         insertSampleUser(db)
     }
@@ -82,22 +82,66 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
         val cursor = db.query(
             USERS,           // Table
-            null,            // Columns (null selects all)
-            selection,       // WHERE clause
-            selectionArgs,   // WHERE arguments
-            null,            // Group by
-            null,            // Having
-            null             // Order by
+            null,
+            selection,
+            selectionArgs,
+            null,
+            null,
+            null
         )
 
         val exists = cursor.count > 0
-        cursor.close() // Always close the cursor to avoid memory leaks
+        cursor.close()
         return exists
+    }
+
+
+    fun getUserByEmail(email: String): Users? {
+        val db = readableDatabase
+        val cursor = db.query(
+            USERS,
+            null,
+            "$USER_EMAIL = ?",
+            arrayOf(email),
+            null, null, null
+        )
+
+        var user: Users? = null
+        if (cursor.moveToFirst()) {
+            val id = cursor.getLong(cursor.getColumnIndexOrThrow(USER_ID))
+            val userEmail = cursor.getString(cursor.getColumnIndexOrThrow(USER_EMAIL))
+            val password = cursor.getString(cursor.getColumnIndexOrThrow(USER_PASSWORD))
+            user = Users(id, userEmail, password)
+        }
+        cursor.close()
+        return user
+    }
+
+
+    fun getUserById(id: Long): Users? {
+        val db = readableDatabase
+        val cursor = db.query(
+            USERS,
+            null,
+            "$USER_ID = ?",
+            arrayOf(id.toString()),
+            null, null, null
+        )
+
+        var user: Users? = null
+        if (cursor.moveToFirst()) {
+            val userId = cursor.getLong(cursor.getColumnIndexOrThrow(USER_ID))
+            val email = cursor.getString(cursor.getColumnIndexOrThrow(USER_EMAIL))
+            val pass = cursor.getString(cursor.getColumnIndexOrThrow(USER_PASSWORD))
+            user = Users(userId, email, pass)
+        }
+        cursor.close()
+        return user
     }
 
     private fun insertInitialProducts(db: SQLiteDatabase) {
         val products = listOf(
-            ProductData("Smartphone", "Latest 5G phone", 699.99, "ic_phone"),
+            ProductData("Smartphone", "Latest 5G phone", 699.99, "ic_launcher_foreground"),
             ProductData("Laptop", "16GB RAM, 512GB SSD", 1299.99, "ic_laptop"),
             ProductData("Headphones", "Noise cancelling", 199.99, "ic_headphones"),
             ProductData("Smartwatch", "Fitness tracker", 249.99, "ic_watch")
@@ -120,7 +164,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         onCreate(db)
     }
 
-    // Helper to insert a product (if you want to add more later)
+
     fun addProduct(name: String, desc: String, price: Double, imagePath: String): Long {
         val db = writableDatabase
         val values = ContentValues().apply {
@@ -132,7 +176,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return db.insert(TABLE_PRODUCTS, null, values)
     }
 
-    // Get all products
+
     fun getAllProducts(): List<Product> {
         val products = mutableListOf<Product>()
         val db = readableDatabase
@@ -153,7 +197,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return products
     }
 
-    // Internal data class for initial products
+    // Internal data class
     private data class ProductData(val name: String, val description: String, val price: Double, val imagePath: String)
     private data class UserData(val email: String, val password: String)
 }

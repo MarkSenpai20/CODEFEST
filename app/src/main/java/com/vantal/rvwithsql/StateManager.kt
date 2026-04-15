@@ -1,10 +1,9 @@
 package com.vantal.rvwithsql
 
-// StateManager.kt (optional, can be inside Activity)
 object UIState {
     object FormButton{
-        const val STATE_LOGIN = 1
-        const val STATE_REGISTER = 2
+        const val STATE_LOGIN = 1 //0001
+        const val STATE_REGISTER = 2 //0010
     }
 
     object Navigation{
@@ -15,11 +14,11 @@ object UIState {
 
     object NavHome{
         object ProductList {
-            const val HOME = Navigation.STATE_HOME
+            const val HOME = Navigation.STATE_HOME //0100
             const val STATE_LIST = 1 or HOME //0101
             const val STATE_PREVIEW = 2 or HOME // 0110
 
-            // Helper to check if a state is active
+            // Helper checking state if active
             fun isState(currentState: Int, state: Int) = (currentState and state) == state
         }
     }
